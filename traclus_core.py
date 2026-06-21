@@ -424,26 +424,6 @@ def filtrar_cardinalidade_trajetorias(rotulos, ids_tempestade, limiar: int):
     # Retorna uma cópia dos rótulos com os clusters inválidos
     return rotulos
 
-#-Métrica-QMeasure-==================================================
-
-def qmeasure(matriz_dist, rotulos) -> float:
-    # SSE total ponderado + penalidade de ruído
-    total = 0.0
-
-    # Soma o erro quadrático para cada cluster válido
-    for c in np.unique(rotulos[rotulos >= 0]):
-        idx = np.where(rotulos == c)[0]
-        sub = matriz_dist[np.ix_(idx, idx)]
-        total += (sub**2).sum() / (2 * len(idx))
-    idx_ruido = np.where(rotulos == RUIDO)[0]
-
-    # Penaliza o ruído
-    if len(idx_ruido) > 0:
-        sub = matriz_dist[np.ix_(idx_ruido, idx_ruido)]
-        total += (sub**2).sum() / (2 * len(idx_ruido))
-    # Retorna o qmeasure total
-    return total
-
 #-Trajetória-Representativa-=========================================
 
 def vetor_direcao_medio(segmentos_cluster):
