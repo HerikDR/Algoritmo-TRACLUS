@@ -531,4 +531,67 @@ def construir_perfil_meteorologico(segmentos, resumo_tempestades):
         )
     return pd.DataFrame(registros)
 
+#-Funções-de-Avaliação-de-Clusters-==================================
+
+def qmeasure(matriz_dist, rotulos):
+    # QMeasure: SSE intra-cluster + penalidade de ruído.
+    q = 0.0
+    for c in np.unique(rotulos[rotulos >= 0]):
+        idx = np.where(rotulos == c)[0]
+        sub = matriz_dist[np.ix_(idx, idx)]
+        q += (sub ** 2).sum() / (2 * len(idx))
+    idx_n = np.where(rotulos == RUIDO)[0]
+    if len(idx_n) > 0:
+        sub_n = matriz_dist[np.ix_(idx_n, idx_n)]
+        q += (sub_n ** 2).sum() / (2 * len(idx_n))
+    # Retorna o índice do QMeasure
+    return float(q)
+
+
+def calcular_coesao_clusters(matriz_dist, rotulos, clusters_validos):
+    # Métricas intra-cluster a partir da matriz de distâncias pré-computada
+    registros = []
+    for c in clusters_validos:
+        idx = np.where(rotulos == c)[0]
+        sub = matriz_dist[np.ix_(idx, idx)]
+        triu = sub[np.triu_indices_from(sub, k=1)]
+        registros.append({
+            "cluster": c,
+            "n_segmentos": len(idx),
+            "dist_media_intra": triu.mean() if len(triu) > 0 else 0.0,
+            "diametro_km": sub.max(),
+        })
+    # Retorna DataFrame com: cluster, n_segmentos, dist_media_intra, diametro_km
+    return pd.DataFrame(registros)
+
+
+def calcular_separacao_clusters(matriz_dist, rotulos, clusters_validos):
+    """
+    Matriz (n_c × n_c) de distância média inter-cluster
+    Diagonal = 0; mat_inter[i, j] = média das distâncias cruzadas entre C_i e C_j
+    """
+    n_c = len(clusters_validos)
+    indices = [np.where(rotulos == c)[0] for c in clusters_validos]
+    mat_inter = np.zeros((n_c, n_c))
+    for i in range(n_c):
+        for j in range(n_c):
+            if i != j:
+                mat_inter[i, j] = matriz_dist[np.ix_(indices[i], indices[j])].mean()
+    # Retorna a matriz de distância média inter-cluster
+    return mat_inter
+
+
+def davies_bouldin_adaptado(tabela_coesao, mat_inter, clusters_validos):
+    # Índice Davies-Bouldin usando distâncias médias intra e inter-cluster
+    s = dict(zip(tabela_coesao["cluster"], tabela_coesao["dist_media_intra"]))
+    db_parcial = [
+        max(
+            (s[ci] + s[cj]) / mat_inter[i, j] if mat_inter[i, j] > 0 else np.inf
+            for j, cj in enumerate(clusters_validos) if i != j
+        )
+        for i, ci in enumerate(clusters_validos)
+    ]
+    # Retorna a média do índice DB adaptado
+    return float(np.mean(db_parcial))
+
 #====================================================================
