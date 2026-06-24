@@ -56,7 +56,7 @@ A avaliação dos clusters combina métricas adaptadas: coeficiente Silhouette e
 
 ```bash
 git clone https://github.com/HerikDR/Algoritmo-TRACLUS
-cd traclusnotebook
+cd Algoritmo-TRACLUS
 ```
 
 ### 2. Crie e ative o ambiente virtual
@@ -89,7 +89,7 @@ jupyter notebook traclus_hurdat.ipynb
 ### Estrutura de Pastas Esperada
 
 ```
-TRACLUSNOTEBOOK/
+ALGORITMO-TRACLUS/
 ├── .venv/
 ├── dataset/
 │   ├── hurdat2_trajectories.csv
